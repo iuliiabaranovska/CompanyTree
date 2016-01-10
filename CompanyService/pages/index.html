@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>CompanyTree</title>
+    <link rel="stylesheet" href="../libs/treelib/themes/default/style.min.css" />
+    <link rel="stylesheet" href="../styles/main.css" />
+</head>
+
+<body>
+
+    <script src="../libs/jquery-1.11.3.js"></script>
+    <script src="../libs/treelib/jstree.min.js"></script>
+    <script src="../scripts/company.js"></script>
+    <script src="../scripts/helper.js"></script>
+    <script src="../scripts/company-service.js"></script>
+    <script src="../scripts/tree-builder.js"></script>
+
+    <h1> Company Tree </h1>
+
+    <div id="companiesTree"></div>
+
+    <div>
+        <button class="mybutton" id="addCompany">Add</button>
+        <button class="mybutton" id="viewCompany">View</button>
+        <button class="mybutton" id="editCompany">Edit</button>
+        <button class="mybutton" id="deleteCompany">Delete</button>
+    </div>
+    <div class="b-popup" id="companyPopup">
+        <div class="b-popup-content">
+            <fieldset class="fieldset">
+                <div class="field">
+                    <input id="companyName" type="text" /><br />
+                    <input id="estimatedEarnings" type="number" min="0" /><br />
+                    <select id="parent">
+                        <option></option>
+                    </select>
+                </div>
+                <div class="label">
+                    <label>Company</label><br />
+                    <label>Estimated Earnings</label><br />
+                    <label>Main Company</label>
+                </div>
+            </fieldset>
+
+            <button class="saveButton" id="saveButton">Save</button>
+            <button class="cancelButton" id="cancelButton">Cancel</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        var companiesTree = new Tree("#companiesTree"),
+            companyService = new CompanyService("#companyPopup"),
+            uri = "/api/Company/GetAll/",
+            companies = [];
+
+        var loadAllCompanies = function () {
+            $.get(uri)
+                .done(function (allcompanies) {
+
+                    companies = [];
+
+                    for (var i = 0; i < allcompanies.length; i++) {
+                        companies[i] = new Company(allcompanies[i].Id, allcompanies[i].ParentId || "#", allcompanies[i].Name, allcompanies[i].EstimatedEarnings);
+                    }
+                    companyService.companies = companies;
+                    CompanyService.updateHierarchy(companies);
+                    companiesTree.build(companies);
+                });
+        };
+
+        loadAllCompanies();
+
+        $("#addCompany").on("click", function () { companyService.add(loadAllCompanies); });
+        $("#viewCompany").on("click", function () { companyService.view(companiesTree.selectedNodeId); });
+        $("#editCompany").on("click", function () { companyService.edit(companiesTree.selectedNodeId, loadAllCompanies); });
+        $("#deleteCompany").on("click", function () { companyService.delete(companiesTree.selectedNodeId, loadAllCompanies); });
+
+        $("#cancelButton").on("click", function () { $("#companyPopup").fadeOut(); });
+
+    </script>
+</body>
+</html>
